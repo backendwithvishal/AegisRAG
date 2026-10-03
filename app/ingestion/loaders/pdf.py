@@ -1,3 +1,4 @@
+import time
 import logfire
 from pypdf import PdfReader
 
@@ -6,7 +7,9 @@ def parse_pdf(file_path: str) -> str:
     """
     Extract text from a PDF locally using pypdf.
     Falls back to pdfplumber for pages that yield no text (e.g. image-heavy pages).
+    Logs parse duration and extracted metrics to Logfire.
     """
+    start_time = time.time()
     with logfire.span("PDF Parsing (local)", filename=file_path):
         try:
             reader = PdfReader(file_path)
@@ -30,22 +33,25 @@ def parse_pdf(file_path: str) -> str:
                     import pdfplumber
                     with pdfplumber.open(file_path) as pdf:
                         for page_num in blank_pages:
-                            page = pdf.pages[page_num - 1]
-                            fallback_text = page.extract_text() or ""
-                            if fallback_text.strip():
-                                text_parts.append(fallback_text)
+                            if page_num - 1 < len(pdf.pages):
+                                page = pdf.pages[page_num - 1]
+                                fallback_text = page.extract_text() or ""
+                                if fallback_text.strip():
+                                    text_parts.append(fallback_text)
                 except Exception as plumber_err:
                     logfire.warning(f"pdfplumber fallback failed: {plumber_err}")
 
             full_text = "\n".join(text_parts)
+            duration = time.time() - start_time
 
             if not full_text.strip():
-                logfire.warning(f"No text extracted from {file_path}. File may be fully image-based.")
+                logfire.warning(f"No text extracted from {file_path}. File may be fully image-based. Duration: {duration:.3f}s")
             else:
-                logfire.info(f"Extracted {len(full_text)} characters from {file_path}.")
+                logfire.info(f"Extracted {len(full_text)} characters from {file_path} in {duration:.3f}s.")
 
             return full_text
 
         except Exception as e:
-            logfire.error(f"PDF Parse Failed for {file_path}: {e}")
+            duration = time.time() - start_time
+            logfire.error(f"PDF Parse Failed for {file_path} after {duration:.3f}s: {e}")
             raise

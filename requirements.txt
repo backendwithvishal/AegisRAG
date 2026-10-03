@@ -50,12 +50,11 @@ langchain-nvidia-ai-endpoints # LangChain integration with NVIDIA AI Endpoints
 portkey-ai                  # Portkey Gateway for unified LLM routing, fallbacks & observability
 
 # --- EVALUATION (EVALS) ---
-ragas                       # RAG-specific evaluation metrics (Faithfulness, Relevancy, Recall)
-deepeval                    # Pytest-compatible test runner wrapping RAGAS & safety metrics
-langfuse                    # Live production monitoring, tracing & user feedback collection
+ragas==0.2.15               # RAG eval metrics — pinned: 0.2.15 is the last compatible release
+                            #   with langchain-community; 0.4.x requires scikit-network + instructor
+instructor                  # Structured LLM output library required by ragas 0.2.x llms/base
 
 # --- EMBEDDINGS (SENTENCE TRANSFORMERS) ---
-sentence-transformers       # Used by FlashRank reranker internally
+sentence-transformers       # Used by FlashRank reranker internally and ragas HuggingfaceEmbeddings
 langchain_google_genai
-
 langchain-google-vertexai
