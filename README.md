@@ -18,25 +18,25 @@ flowchart TD
     User([Client / API Consumer]) -->|POST /query| MainAPI[FastAPI Service]
     
     subgraph "Gate 1: Zero-Trust Safety Layer"
-        MainAPI -->|Check Query| Rails[NVIDIA NeMo Guardrails\nLlama 3.1 8B via ChatGroq]
-        Rails -->|Off-Topic / Jailbreak Fired| Refusal[Canned Refusal Return\nLatency: <300ms | 0 LLM Tokens Burned]
+        MainAPI -->|Check Query| Rails[NVIDIA NeMo Guardrails<br/>Llama 3.1 8B via ChatGroq]
+        Rails -->|Off-Topic / Jailbreak Fired| Refusal[Canned Refusal Return<br/>Latency: &lt;300ms<br/>0 LLM Tokens Burned]
     end
 
     subgraph "Gate 2: LangGraph Agentic Pipeline"
-        Rails -->|Clean Query| Planner[Planner Node\nPortkey ChatOpenAI]
+        Rails -->|Clean Query| Planner[Planner Node<br/>Portkey ChatOpenAI]
         
-        Planner -->|Conversational / Memory Intent| Responder[Responder Node\nGroq Llama 3.3 70B via Portkey]
-        Planner -->|Technical Intent| Retriever[Retriever Node\n2-Stage Hybrid Search]
+        Planner -->|Conversational / Memory Intent| Responder[Responder Node<br/>Groq Llama 3.3 70B via Portkey]
+        Planner -->|Technical Intent| Retriever[Retriever Node<br/>2-Stage Retrieval]
         
         subgraph "Stage 1 & Stage 2 Retrieval Subsystem"
             Retriever -->|Dense Embedding| GeminiEmbed[Gemini 3072-dim / MPNet 768-dim]
-            GeminiEmbed -->|Vector Cosine Search| Qdrant[(Qdrant Cloud DB\nTop 15 Candidates)]
-            Qdrant -->|Passage Candidates| FlashRank[FlashRank Cross-Encoder\nms-marco-MiniLM-L-6-v2 ONNX\nLocal CPU <85ms]
+            GeminiEmbed -->|Vector Cosine Search| Qdrant[(Qdrant Cloud DB<br/>Top 15 Candidates)]
+            Qdrant -->|Passage Candidates| FlashRank[FlashRank Cross-Encoder<br/>ms-marco-MiniLM-L-6-v2 ONNX<br/>Local CPU &lt;85ms]
             FlashRank -->|Top 5 Reranked Passages| RerankedDocs[High-Precision Technical Context]
         end
         
         RerankedDocs --> Responder
-        Responder -->|Cache Check & Secret Scan| OutputGuard[Output Safety Guardrail\nPII / Key Redaction]
+        Responder -->|Cache Check & Secret Scan| OutputGuard[Output Safety Guardrail<br/>PII / Key Redaction]
     end
 
     OutputGuard -->|Final Response JSON / SSE Stream| User
